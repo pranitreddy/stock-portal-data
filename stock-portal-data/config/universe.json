@@ -1,0 +1,13 @@
+{
+  "phases": ["AI Foundation", "Power & Resources", "Physical AI Economy", "Satellite", "News only"],
+  "tickers": {
+    "AI Foundation": ["NVDA","AVGO","AMD","TSM","ASML","MU","ARM","SNPS","ANET","ALAB","LITE","COHR","CIEN","DELL","SMCI","PSTG","CRWV","IREN","EQIX","AMZN","GOOGL","META","PLTR","NOW","CRWD"],
+    "Power & Resources": ["VRT","ETN","PWR","FIX","GEV","VST","AEP","BE","OKLO","CCJ","NVTS","FCX","ALB","MP"],
+    "Physical AI Economy": ["TSLA","ROK","MBLY","AVAV","KTOS","RKLB","SPCX","ARKX","IONQ","TEM"],
+    "Satellite": ["COIN","ZETA","HIMS"],
+    "News only": ["ORCL","OUST","CRM"]
+  },
+  "added_oct2": ["COIN","NVTS","ZETA","AMD","META","HIMS"],
+  "user_added": [],
+  "macro": {"SPY":"S&P 500","QQQ":"Nasdaq 100","^SOX":"Semis (SOX)","^VIX":"VIX","^TNX":"10Y yield","DX-Y.NYB":"Dollar (DXY)","HG=F":"COMEX copper","URA":"Uranium (URA)","GC=F":"Gold","CL=F":"WTI crude"}
+}
