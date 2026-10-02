@@ -257,13 +257,25 @@ def main():
         bars = {s: mock_bars(s) for s in syms + list(macro)}
     else:
         import yfinance as yf
-        df = yf.download(syms + list(macro), period="1y", interval="1d", group_by="ticker",
-                         auto_adjust=True, threads=True, progress=False)
+        df = None
+        for attempt in range(3):                      # Yahoo sometimes rate-limits; retry before giving up
+            try:
+                df = yf.download(syms + list(macro), period="1y", interval="1d", group_by="ticker",
+                                 auto_adjust=True, threads=False, progress=False)
+                if df is not None and not df.empty:
+                    break
+            except Exception as e:
+                print(f"  yahoo download attempt {attempt+1} failed: {e}", file=sys.stderr)
+            time.sleep(20 * (attempt + 1))
         for s in syms + list(macro):
             try:
                 bars[s] = df[s]
             except Exception:
-                print(f"  no bars for {s}", file=sys.stderr)
+                try:                                  # per-ticker fallback
+                    bars[s] = yf.Ticker(s).history(period="1y", auto_adjust=True)
+                    time.sleep(0.5)
+                except Exception:
+                    print(f"  no bars for {s}", file=sys.stderr)
 
     out = {"asOf": now_utc().isoformat(timespec="seconds"), "source": "mock" if mock else "yahoo+finnhub" if FINNHUB_KEY else "yahoo",
            "macro": {}, "tickers": {}, "errors": []}
@@ -277,7 +289,8 @@ def main():
     spy5 = (out["macro"].get("SPY") or {}).get("chg1m")
     new_targets = {}
     for s in syms:
-        print(s, file=sys.stderr)
+      print(s, file=sys.stderr)
+      try:
         m = metrics_from_bars(bars[s]) if s in bars else None
         if not m:
             out["errors"].append(f"{s}: no price data")
@@ -311,6 +324,9 @@ def main():
             row["targetPrev"] = prev_targets.get(s)
         row["material"] = materiality(row, prev_targets.get(s))
         out["tickers"][s] = row
+      except Exception as e:
+        import traceback; traceback.print_exc()
+        out["errors"].append(f"{s}: {type(e).__name__}: {e}"[:200])
 
     # phase medians -> "behaviour within its group"
     for phase in set(phase_of.values()):
@@ -321,6 +337,7 @@ def main():
                 if r["phase"] == phase and r.get("chg5d") is not None:
                     r["vsPhase5d"] = round(r["chg5d"] - med, 2)
 
+    OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(out, separators=(",", ":")))
     if not mock:
         STATE.write_text(json.dumps({"targets": {**prev_targets, **new_targets}, "asOf": out["asOf"]}))
@@ -330,3 +347,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    # never fail the job just because some tickers errored; errors are listed inside snapshot.json
