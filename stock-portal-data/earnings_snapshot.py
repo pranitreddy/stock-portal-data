@@ -426,7 +426,16 @@ def main():
                    "rsSector3m": f(t["chg3m"] - out["etf"][etf]["chg3m"]) if etf in out["etf"] and t["chg3m"] is not None else None,
                    "history": rx, "stats": st, "estimates": est, "analysts": analysts(tk, info),
                    "insiders": insiders(tk, s), "options": options(tk, t["price"], r["date"]), "news": news(tk),
-                   "strength": score, "strengthParts": parts}
+                   "strength": score, "strengthParts": parts,
+                   "about": (info.get("longBusinessSummary") or "")[:700], "website": info.get("website"),
+                   "employees": info.get("fullTimeEmployees"),
+                   "fin": {"revenue": info.get("totalRevenue"), "revGrowth": f((info.get("revenueGrowth") or 0) * 100, 1) if info.get("revenueGrowth") is not None else None,
+                           "grossMargin": f((info.get("grossMargins") or 0) * 100, 1) if info.get("grossMargins") is not None else None,
+                           "opMargin": f((info.get("operatingMargins") or 0) * 100, 1) if info.get("operatingMargins") is not None else None,
+                           "netMargin": f((info.get("profitMargins") or 0) * 100, 1) if info.get("profitMargins") is not None else None,
+                           "cash": info.get("totalCash"), "debt": info.get("totalDebt"), "debtToEquity": f(info.get("debtToEquity"), 0),
+                           "fcf": info.get("freeCashflow"), "divYield": f(info.get("dividendYield"), 2),
+                           "payout": f((info.get("payoutRatio") or 0) * 100, 0) if info.get("payoutRatio") is not None else None}}
             out["tickers"][s] = row
             time.sleep(1)
         except Exception as e:
