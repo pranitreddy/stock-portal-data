@@ -1,0 +1,35 @@
+name: earnings-snapshot
+on:
+  schedule:
+    - cron: "0 23 * * 0"      # Sunday ~6 PM CT: next week's list
+    - cron: "30 11 * * 1-5"   # weekdays ~6:30 AM CT (CDT)
+  push:
+    branches: [main]
+    paths:
+      - "stock-portal-data/earnings_snapshot.py"
+      - ".github/workflows/earnings.yml"
+  workflow_dispatch: {}
+permissions:
+  contents: write
+jobs:
+  earnings:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: stock-portal-data
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install -r requirements.txt
+      - run: mkdir -p data && python earnings_snapshot.py
+        env:
+          FINNHUB_KEY: ${{ secrets.FINNHUB_KEY }}
+      - name: Commit
+        run: |
+          git pull --rebase || true
+          git config user.name "snapshot-bot"
+          git config user.email "snapshot-bot@users.noreply.github.com"
+          git add data/earnings.json
+          git diff --cached --quiet || git commit -m "earnings $(date -u +%F)"
+          git push
